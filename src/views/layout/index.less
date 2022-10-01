@@ -1,0 +1,30 @@
+* {
+  margin: 0;
+}
+
+.layout {
+  border: 1px solid var(--semi-color-border);
+  height: 100vh;
+}
+
+.content {
+  padding: 10px;
+  background-color: var(--semi-color-bg-0);
+  overflow: auto;
+
+  .content-container {
+    border-radius: 4px;
+    height: calc(100% - 66px);
+    border: 1px solid var(--semi-color-border);
+    padding: 32px;
+    box-shadow: -2px 2px 30px -3px rgba(45, 47, 102, 0.212);
+  }
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 20px;
+  color: var(--semi-color-text-2);
+  background-color: rgba(var(--semi-grey-0), 1);
+}
