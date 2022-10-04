@@ -8,21 +8,52 @@ import {
 } from "@douyinfe/semi-ui";
 import { IconMail, IconKey, IconGithubLogo } from "@douyinfe/semi-icons";
 import "./index.less";
-import axios from "@/utils/axios";
 import logo from "@/assets/mlogo.png";
 import md5 from "js-md5";
+import { useState } from "react";
+import Loading from "../../components/Loading";
+import { Toast } from "@douyinfe/semi-ui";
+import { useNavigate } from "react-router-dom";
+import { isToken } from "@/utils";
+import axios from "@/utils/axios";
+
+// 登录表单接口
+interface Login {
+  userName: string;
+  passwordMd5: string;
+}
 
 const Login = () => {
-  axios
-    .post("/manage-api/v1/adminUser/login", {
-      userName: "admin",
-      passwordMd5: "e10adc3949ba59abbe56e057f20f883e",
-    })
-    .then((a) => {
-      console.log(a);
-    });
   const { Text, Title } = Typography;
   const { Header, Content } = Layout;
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+
+  const onFinish = async (loginForm: Login) => {
+    try {
+      setLoading(true);
+      const { passwordMd5 } = loginForm;
+      const newVal = {
+        ...loginForm,
+        passwordMd5: md5(passwordMd5),
+      };
+      const result = await axios.post("/manage-api/v1/adminUser/login", newVal);
+      if (isToken(result)) {
+        localStorage.token = result;
+        Toast.success({
+          content: "登录成功",
+          duration: 1,
+          onClose: () => {
+            navigate("/introduce");
+          },
+        });
+      } else {
+        Toast.error(result);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <Layout className="loginWrapper">
@@ -58,18 +89,9 @@ const Login = () => {
       <Content className="content">
         <div className="formContainer">
           <h2 className="mb15">后台登录</h2>
-          <Form
-            onSubmit={(oldVal) => {
-              const { passwordMd5 } = oldVal;
-              const newVal = {
-                ...oldVal,
-                passwordMd5: md5(passwordMd5),
-              };
-              console.log(newVal);
-            }}
-          >
+          <Form onSubmit={onFinish}>
             <Form.Input
-              field="username"
+              field="userName"
               noLabel={true}
               prefix={<IconMail />}
               placeholder="请输入注册账号"
@@ -90,6 +112,7 @@ const Login = () => {
               theme="solid"
               block
               className="m15"
+              loading={loading}
             >
               登录
             </Button>

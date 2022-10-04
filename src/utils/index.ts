@@ -12,3 +12,12 @@ export function localGet(key: string) {
     return value;
   }
 }
+
+/**
+ * 判断是否是 token
+ * @param {string} 需要判断的参数
+ * @return {boolean}  判断结果
+ */
+export function isToken(token: string): boolean {
+  return token.length === 32;
+}
