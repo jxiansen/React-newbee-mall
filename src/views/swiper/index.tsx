@@ -1,51 +1,52 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Table,
   Typography,
-  Button,
-  Popconfirm,
   Image,
   Toast,
-  Modal,
+  Space,
+  Button,
 } from "@douyinfe/semi-ui";
-import * as dateFns from "date-fns";
+import DiablogSwiper from "./components/DiablogSwiper";
+import DeletePopConfirm from "./components/DeletePopConfirm";
+import ButtonAdd from "./components/ButtonAdd";
+import axios from "@/utils/axios";
 import "./index.less";
-import axios from "../../utils/axios";
-import Loading from "../../components/Loading";
-import { ResPage } from "../../api/interface";
-import { IconDelete, IconChevronDown } from "@douyinfe/semi-icons";
-import DiablogSetSwiper from "./module/DiablogSetSwiper";
 
 export default function App() {
-  const [dataSource, setData] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [currentPage, setPage] = useState(1);
-  const [imageVisible, setVisible] = useState(false);
-  const [total, setTotal] = useState(100);
   const { Text } = Typography;
-  // const rowSelection = useMemo(
-  //   () => ({
-  //     onChange: (selectedRowKeys, selectedRows) => {
-  //       console.log(
-  //         `selectedRowKeys: ${selectedRowKeys}`,
-  //         "selectedRows: ",
-  //         selectedRows
-  //       );
-  //     },
-  //     getCheckboxProps: (record) => ({
-  //       disabled: record.name === "Michael James", // Column configuration not to be checked
-  //       name: record.name,
-  //     }),
-  //   }),
-  //   []
-  // );
-  // const scroll = useMemo(() => ({ y: 300 }), []);
+  const [dataSource, setData] = useState([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [currentPage, setPage] = useState(1);
+  const [deleteIds, setDeleteIds] = useState<Array<number | string>>([]);
+  const [total, setTotal] = useState(100);
+
+  // 每次行选择重设新的选中数据
+  const rowSelection = useMemo(
+    () => ({
+      onChange: (selectedRowKeys: number[] | string[]) => {
+        setDeleteIds(selectedRowKeys);
+      },
+    }),
+    []
+  );
+
+  // 批量删除分类信息
+  const batchDelete = async () => {
+    try {
+      const res = await axios.delete("/carousels", {
+        data: { ids: deleteIds },
+      });
+      console.log(res);
+      // if(res)
+      Toast.success("删除成功");
+    } catch (err) {}
+  };
 
   const columns = [
     {
       title: "轮播图",
       dataIndex: "carouselUrl",
-      // width: 200,
       render: (imgUrl: string) => {
         return <Image width={70} height={70} src={imgUrl} />;
       },
@@ -53,7 +54,6 @@ export default function App() {
     {
       title: "跳转链接",
       dataIndex: "redirectUrl",
-      // width: 200,
       render: (link: string) => {
         return <Text link={{ href: link }}>{link}</Text>;
       },
@@ -76,29 +76,8 @@ export default function App() {
       render: (id: number, record: any) => {
         return (
           <div style={{ display: "flex" }}>
-            <DiablogSetSwiper dataSource={record} />
-            <Popconfirm
-              title="确定删除吗"
-              content="删除后无法恢复"
-              position="bottom"
-              onConfirm={() => {
-                try {
-                  axios
-                    .delete("/manage-api/v1/carousels", {
-                      data: {
-                        ids: [id],
-                      },
-                    })
-                    .then((res) => {
-                      Toast.success("删除成功");
-                    });
-                } catch (err) {
-                  console.log(err);
-                }
-              }}
-            >
-              <Button icon={<IconDelete />} style={{ marginLeft: "10px" }} />
-            </Popconfirm>
+            <DiablogSwiper dataSource={record} type="set" />
+            <DeletePopConfirm id={id} />
           </div>
         );
       },
@@ -113,7 +92,7 @@ export default function App() {
         pageNumber: page,
         pageSize: 10,
       };
-      const data: any = await axios.get("/manage-api/v1/carousels", {
+      const data: any = await axios.get("/carousels", {
         params,
       });
       const { totalCount, currPage, list } = data;
@@ -134,23 +113,33 @@ export default function App() {
   };
 
   useEffect(() => {
-    console.log(dataSource);
+    // console.log(dataSource);
   }, [dataSource]);
 
   return (
-    <Table
-      columns={columns}
-      dataSource={dataSource}
-      pagination={{
-        currentPage,
-        pageSize: 10,
-        total,
-        onPageChange: handlePageChange,
-      }}
-      loading={loading}
-      // rowSelection={rowSelection}
-      // scroll={scroll}
-      // className="table"
-    />
+    <div className="swiper-wrapper">
+      <div className="operation-container">
+        <Space>
+          <ButtonAdd />
+          <Button type="warning" theme="solid" onClick={batchDelete}>
+            批量删除
+          </Button>
+        </Space>
+      </div>
+      <Table
+        columns={columns}
+        dataSource={dataSource}
+        rowKey={(record: any) => record.carouselId}
+        pagination={{
+          currentPage,
+          pageSize: 10,
+          total,
+          onPageChange: handlePageChange,
+        }}
+        loading={loading}
+        rowSelection={rowSelection}
+        // className="table"
+      />
+    </div>
   );
 }

@@ -33,3 +33,23 @@ export interface ResUploadImg {
   img: string;
   updated: Date;
 }
+
+export interface UserInfo {
+  adminUserId: number;
+  loginUserName: string;
+  loginPassword: string;
+  nickName: string;
+  locked: number;
+}
+
+// 更新用户账户 payload
+export interface newAccountInfo {
+  loginUserName: "string";
+  nickName: "string";
+}
+
+// 更新账户密码 payload
+export interface newPasswordInfo {
+  newPassword: "string";
+  originalPassword: "string";
+}

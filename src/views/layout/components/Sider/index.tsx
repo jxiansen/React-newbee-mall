@@ -87,20 +87,9 @@ const items = [
       },
     ],
   },
-  {
-    itemKey: "4",
-    text: "系统管理",
-    items: [
-      {
-        itemKey: "account",
-        text: "修改密码",
-        icon: <IconLive size="large" />,
-      },
-    ],
-  },
 ];
 
-export default () => {
+const LayoutSider = () => {
   const { Sider } = Layout;
   let { pathname } = useLocation();
   const realPathName = pathname.replace("/", "");
@@ -130,3 +119,4 @@ export default () => {
     </Sider>
   );
 };
+export default LayoutSider;

@@ -1,8 +1,11 @@
-import { Avatar, Button, Layout, Nav } from "@douyinfe/semi-ui";
+import { Button, Layout, Nav } from "@douyinfe/semi-ui";
 import { IconBell, IconHelpCircle } from "@douyinfe/semi-icons";
 import { useLocation } from "react-router-dom";
 
-let headerTextMap = {
+import AvatarIcon from "./components/AvatarIcon";
+
+// 字段映射
+const headerTextMap = {
   introduce: "系统介绍",
   dashboard: "Dashboard",
   add: "添加商品",
@@ -17,10 +20,11 @@ let headerTextMap = {
   account: "修改密码",
 };
 
-export default () => {
+const LayoutHeader = () => {
   const { Header } = Layout;
   let { pathname } = useLocation();
   const realPathName = pathname.replace("/", "");
+
   return (
     <Header
       style={{
@@ -53,12 +57,12 @@ export default () => {
                 marginRight: "12px",
               }}
             />
-            <Avatar color="orange" size="small">
-              YJ
-            </Avatar>
+            <AvatarIcon />
           </>
         }
       ></Nav>
     </Header>
   );
 };
+
+export default LayoutHeader;

@@ -37,7 +37,7 @@ const Login = () => {
         ...loginForm,
         passwordMd5: md5(passwordMd5),
       };
-      const result = await axios.post("/manage-api/v1/adminUser/login", newVal);
+      const result = await axios.post("/adminUser/login", newVal);
       if (isToken(result)) {
         localStorage.token = result;
         Toast.success({

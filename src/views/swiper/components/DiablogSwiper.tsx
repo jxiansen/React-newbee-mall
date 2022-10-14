@@ -1,24 +1,27 @@
 import { Button, Form, Modal, Toast } from "@douyinfe/semi-ui";
 import { IconEdit, IconUpload } from "@douyinfe/semi-icons";
-import { useState } from "react";
 import { IMAGE_PREVIEW_PREFIX, IMAGE_UPLOAD_API } from "@/api/config";
 import { ResUploadImg } from "@/api/interface";
-import isURL from "validator/lib/isURL";
-import axios from "axios";
+import { useRef, useState } from "react";
+import isURL from "validator/es/lib/isURL";
+import axios from "@/utils/axios";
 
-const DiablogSetSwiper = ({ dataSource }: any) => {
+/**
+ * props 中传入数据源和类型,根据类型来判断组件是添加组件还是修改组件,
+ * 默认是修改组件
+ */
+
+const DiablogSwiper = ({ dataSource, type }: any) => {
   const { carouselId, carouselUrl, redirectUrl, carouselRank } = dataSource;
   const [visible, setVisible] = useState(false);
   const [swiperUrl, setSwiperUrl] = useState(carouselId);
+  const api: any = useRef();
+
   const showDialog = () => {
     setVisible(true);
   };
 
-  const handleAfterClose = () => {
-    handleSubmit();
-    console.log("After Close callback executed");
-  };
-
+  // 处理图片上传成功
   const handleUploadSuccess = (resp: ResUploadImg) => {
     const newUrl = [
       IMAGE_PREVIEW_PREFIX,
@@ -32,16 +35,24 @@ const DiablogSetSwiper = ({ dataSource }: any) => {
   };
 
   // 提交修改轮播图信息
-  const handleSubmit = async (val: any) => {
+  const handleOk = () => {
     try {
+      const oldValue = api.current.getValues();
       const newData = {
-        ...val,
+        ...oldValue,
         carouselUrl: swiperUrl,
         carouselId,
       };
 
-      const resp = await axios.put("/manage-api/v1/carousels", newData);
-      console.log(resp);
+      axios.put("/carousels", newData).then(() => {
+        Toast.success({
+          content: "修改成功",
+          duration: 2,
+          onClose: () => {
+            setVisible(false);
+          },
+        });
+      });
     } catch (err) {
       console.log(err);
     }
@@ -51,12 +62,9 @@ const DiablogSetSwiper = ({ dataSource }: any) => {
     <div>
       <Button icon={<IconEdit />} onClick={showDialog} />
       <Modal
-        title="修改轮播图"
+        title={type === "add" ? "添加轮播图" : "修改轮播图"}
         visible={visible}
-        onOk={() => {
-          setVisible(false);
-        }}
-        afterClose={handleAfterClose} //>=1.16.0
+        onOk={handleOk}
         onCancel={() => {
           setVisible(false);
         }}
@@ -66,10 +74,7 @@ const DiablogSetSwiper = ({ dataSource }: any) => {
           labelPosition="left"
           labelWidth="120px"
           labelAlign="right"
-          onSubmit={(val) => {
-            handleSubmit(val);
-          }}
-          // key={labelPosition + labelAlign}
+          getFormApi={(formApi) => (api.current = formApi)}
           style={{ padding: "10px", width: 600 }}
         >
           <Form.Upload
@@ -107,11 +112,10 @@ const DiablogSetSwiper = ({ dataSource }: any) => {
             initValue={carouselRank}
             style={{ width: 200 }}
           />
-          <Button htmlType="submit">提交</Button>
         </Form>
       </Modal>
     </div>
   );
 };
 
-export default DiablogSetSwiper;
+export default DiablogSwiper;

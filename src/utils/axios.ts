@@ -2,7 +2,7 @@ import axios from "axios";
 import { localGet } from ".";
 
 // 这边由于后端没有区分测试和正式，姑且都写成一个接口。
-axios.defaults.baseURL = "http://mr-j.ml:28019/";
+axios.defaults.baseURL = "http://81.68.86.225:28019/manage-api/v1";
 
 // 请求头，headers 信息
 // @ts-ignore
