@@ -6,11 +6,12 @@ import {
   Toast,
   Space,
   Button,
+  Popconfirm,
 } from "@douyinfe/semi-ui";
-import DiablogSwiper from "./components/DiablogSwiper";
-import DeletePopConfirm from "./components/DeletePopConfirm";
-import ButtonAdd from "./components/ButtonAdd";
 import axios from "@/utils/axios";
+import { IconPlus, IconDelete } from "@douyinfe/semi-icons";
+import DialogAddSwiper from "@/components/dialogAddSwiper";
+
 import "./index.less";
 
 export default function App() {
@@ -20,6 +21,9 @@ export default function App() {
   const [currentPage, setPage] = useState(1);
   const [deleteIds, setDeleteIds] = useState<Array<number | string>>([]);
   const [total, setTotal] = useState(100);
+  const [dialogVisible, setDialogVisible] = useState(false);
+  const [dialogData, setDialogData] = useState({});
+  const [operationType, setOperType] = useState("update"); // 默认操作类型是更新
 
   // 每次行选择重设新的选中数据
   const rowSelection = useMemo(
@@ -32,15 +36,16 @@ export default function App() {
   );
 
   // 批量删除分类信息
-  const batchDelete = async () => {
+  const deleteCarousels = async (deleteId?: number) => {
+    if (!deleteIds.length && !deleteId) return; // 判断删除列表是否为空以及是否传入要删除的ID
     try {
       const res = await axios.delete("/carousels", {
-        data: { ids: deleteIds },
+        data: { ids: !!deleteId ? [deleteId] : deleteIds },
       });
-      console.log(res);
-      // if(res)
       Toast.success("删除成功");
-    } catch (err) {}
+    } catch (err) {
+      Toast.error(`${err}`);
+    }
   };
 
   const columns = [
@@ -75,10 +80,32 @@ export default function App() {
       dataIndex: "carouselId",
       render: (id: number, record: any) => {
         return (
-          <div style={{ display: "flex" }}>
-            <DiablogSwiper dataSource={record} type="set" />
-            <DeletePopConfirm id={id} />
-          </div>
+          <Space>
+            <Button
+              theme="borderless"
+              type="secondary"
+              size="small"
+              onClick={() => {
+                setOperType("update");
+                setDialogVisible(true);
+                setDialogData(record);
+              }}
+            >
+              修改
+            </Button>
+            <Popconfirm
+              title="确定删除吗"
+              content="删除后无法恢复"
+              position="bottom"
+              onConfirm={() => {
+                deleteCarousels(id);
+              }}
+            >
+              <Button theme="borderless" type="secondary" size="small">
+                删除
+              </Button>
+            </Popconfirm>
+          </Space>
         );
       },
     },
@@ -112,16 +139,29 @@ export default function App() {
     fetchData(page);
   };
 
-  useEffect(() => {
-    // console.log(dataSource);
-  }, [dataSource]);
-
   return (
     <div className="swiper-wrapper">
       <div className="operation-container">
         <Space>
-          <ButtonAdd />
-          <Button type="warning" theme="solid" onClick={batchDelete}>
+          <Button
+            type="secondary"
+            theme="solid"
+            icon={<IconPlus />}
+            onClick={() => {
+              setOperType("add");
+              setDialogVisible(true);
+            }}
+          >
+            添加
+          </Button>
+          <Button
+            type="danger"
+            theme="solid"
+            icon={<IconDelete />}
+            onClick={() => {
+              deleteCarousels();
+            }}
+          >
             批量删除
           </Button>
         </Space>
@@ -130,6 +170,7 @@ export default function App() {
         columns={columns}
         dataSource={dataSource}
         rowKey={(record: any) => record.carouselId}
+        rowSelection={rowSelection}
         pagination={{
           currentPage,
           pageSize: 10,
@@ -137,8 +178,13 @@ export default function App() {
           onPageChange: handlePageChange,
         }}
         loading={loading}
-        rowSelection={rowSelection}
-        // className="table"
+      />
+
+      <DialogAddSwiper
+        visible={dialogVisible}
+        swiperData={dialogData}
+        setVisible={setDialogVisible}
+        type={operationType}
       />
     </div>
   );
