@@ -7,19 +7,15 @@ import isURL from "validator/es/lib/isURL";
 import axios from "@/utils/axios";
 
 const DiablogSwiper = (props: any) => {
-  const { swiperData, visible, setVisible, type } = props;
-  const [dataSource, setDataSource] = useState({});
+  const { swiperData, visible, setVisible, type, dispatchSetData } = props;
   const { carouselId, carouselUrl, redirectUrl, carouselRank } = swiperData;
-  const [swiperUrl, setSwiperUrl] = useState(carouselId);
-  const api: any = useRef();
+  const [swiperUrl, setSwiperUrl] = useState("");
 
   useEffect(() => {
-    if (type && type === "add") {
-      setDataSource({});
-    } else {
-      setDataSource(swiperData);
-    }
-  }, []);
+    setSwiperUrl(carouselUrl);
+  }, [carouselUrl]);
+
+  const apiRef: any = useRef();
 
   // 处理图片上传成功
   const handleUploadSuccess = (resp: ResUploadImg) => {
@@ -43,7 +39,7 @@ const DiablogSwiper = (props: any) => {
 
   // 点击提交按钮
   const handleOk = () => {
-    const oldValue = api.current.getValues();
+    const oldValue = apiRef.current.getValues();
     const newData = {
       ...oldValue,
       carouselUrl: swiperUrl,
@@ -55,20 +51,25 @@ const DiablogSwiper = (props: any) => {
 
   // 修改轮播图
   const updateCarousels = (payload: any) => {
-    try {
-      axios.put("/carousels", payload).then(() => {
-        Toast.success({
-          content: "修改成功",
-          duration: 1.5,
-          onClose: () => {
-            setVisible(false);
-          },
-        });
+    axios
+      .put("/carousels", payload)
+      .then((res) => {
+        if (res === null) {
+          Toast.success({
+            content: "修改成功",
+            duration: 1.5,
+            onClose: () => {
+              setVisible(false);
+              dispatchSetData("update", payload);
+            },
+          });
+        } else {
+          Toast.error("修改失败");
+        }
+      })
+      .catch((err) => {
+        Toast.error(err);
       });
-    } catch (err) {
-      Toast.error("修改失败");
-      console.log(err);
-    }
   };
 
   // 新增轮播图
@@ -90,7 +91,7 @@ const DiablogSwiper = (props: any) => {
         labelPosition="left"
         labelWidth="120px"
         labelAlign="right"
-        getFormApi={(formApi) => (api.current = formApi)}
+        getFormApi={(formApi) => (apiRef.current = formApi)}
         style={{ padding: "10px", width: 600 }}
       >
         <Form.Upload

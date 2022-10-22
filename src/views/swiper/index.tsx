@@ -11,12 +11,12 @@ import {
 import axios from "@/utils/axios";
 import { IconPlus, IconDelete } from "@douyinfe/semi-icons";
 import DialogAddSwiper from "@/components/dialogAddSwiper";
-
+import { useUpdate } from "ahooks";
 import "./index.less";
 
 export default function App() {
   const { Text } = Typography;
-  const [dataSource, setData] = useState([]);
+  const [dataSource, setData] = useState<Array<any>>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [currentPage, setPage] = useState(1);
   const [deleteIds, setDeleteIds] = useState<Array<number | string>>([]);
@@ -24,6 +24,39 @@ export default function App() {
   const [dialogVisible, setDialogVisible] = useState(false);
   const [dialogData, setDialogData] = useState({});
   const [operationType, setOperType] = useState("update"); // 默认操作类型是更新
+
+  const dispatchSetData = (action: string, payload?: any) => {
+    let newData = [...dataSource];
+    switch (action) {
+      case "add":
+        if (payload && typeof payload === "object") {
+          newData.push(payload);
+        }
+        break;
+      case "delete":
+        // payload为 idList
+        const deleteIds =
+          Array.isArray(payload) && payload.length
+            ? payload
+            : [payload].flat(1);
+        newData = dataSource.filter(
+          (item) => !deleteIds.includes(item.carouselId)
+        );
+        break;
+      case "update":
+        // payload为更新的目标 item
+        const { carouselId } = payload;
+        const targetIdx =
+          carouselId &&
+          dataSource.findIndex((row) => row.carouselId === carouselId);
+
+        newData[targetIdx] = Object.assign({}, newData[targetIdx], payload);
+        break;
+      default:
+        break;
+    }
+    setData(newData);
+  };
 
   // 每次行选择重设新的选中数据
   const rowSelection = useMemo(
@@ -36,16 +69,28 @@ export default function App() {
   );
 
   // 批量删除分类信息
-  const deleteCarousels = async (deleteId?: number) => {
+  const deleteCarousels = (deleteId?: number) => {
     if (!deleteIds.length && !deleteId) return; // 判断删除列表是否为空以及是否传入要删除的ID
-    try {
-      const res = await axios.delete("/carousels", {
+    axios
+      .delete("/carousels", {
         data: { ids: !!deleteId ? [deleteId] : deleteIds },
+      })
+      .then((res) => {
+        if (res === null) {
+          Toast.success({
+            content: "删除成功",
+            duration: 1.5,
+            onClose: () => {
+              dispatchSetData("delete", deleteId ? deleteId : deleteIds);
+            },
+          });
+        } else {
+          Toast.error("删除失败");
+        }
+      })
+      .catch((err) => {
+        Toast.error(`${err}`);
       });
-      Toast.success("删除成功");
-    } catch (err) {
-      Toast.error(`${err}`);
-    }
   };
 
   const columns = [
@@ -185,6 +230,7 @@ export default function App() {
         swiperData={dialogData}
         setVisible={setDialogVisible}
         type={operationType}
+        dispatchSetData={dispatchSetData}
       />
     </div>
   );
