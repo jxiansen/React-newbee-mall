@@ -42,12 +42,14 @@ const AvatarIcon = (props: any) => {
       updatePasswd(passwdInfo);
     }
     Toast.success("账户信息更新成功");
-    // setVisible(false);
+    setVisible(false);
   };
+
   const handleCancel = () => {
     setVisible(false);
     console.log("Cancel button clicked");
   };
+
   const handleAfterClose = () => {
     console.log("After Close callback executed");
   };

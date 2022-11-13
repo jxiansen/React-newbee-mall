@@ -6,14 +6,10 @@ import { IMAGE_PREVIEW_PREFIX, IMAGE_UPLOAD_API } from "@/api/config";
 import isURL from "validator/es/lib/isURL";
 import axios from "@/utils/axios";
 
-const DiablogSwiper = (props: any) => {
-  const { swiperData, visible, setVisible, type, dispatchSetData } = props;
-  const { carouselId, carouselUrl, redirectUrl, carouselRank } = swiperData;
+function SwiperModal(props: any) {
+  const { item, visible, onClose, onRefresh } = props;
+  const { carouselId, carouselUrl, redirectUrl, carouselRank } = item;
   const [swiperUrl, setSwiperUrl] = useState("");
-
-  useEffect(() => {
-    setSwiperUrl(carouselUrl);
-  }, [carouselUrl]);
 
   const apiRef: any = useRef();
 
@@ -32,11 +28,6 @@ const DiablogSwiper = (props: any) => {
     setSwiperUrl(newUrl);
   };
 
-  // 图片上传失败
-  const handleUploadFail = () => {
-    Toast.error("图片上传失败");
-  };
-
   // 点击提交按钮
   const handleOk = () => {
     const oldValue = apiRef.current.getValues();
@@ -45,8 +36,7 @@ const DiablogSwiper = (props: any) => {
       carouselUrl: swiperUrl,
       carouselId,
     };
-    swiperData ? updateCarousels(newData) : addCarousels();
-    setVisible(false);
+    Object.keys(item).length ? updateCarousels(newData) : addCarousels(newData);
   };
 
   // 修改轮播图
@@ -55,37 +45,55 @@ const DiablogSwiper = (props: any) => {
       .put("/carousels", payload)
       .then((res) => {
         if (res === null) {
+          onRefresh();
           Toast.success({
             content: "修改成功",
             duration: 1.5,
-            onClose: () => {
-              setVisible(false);
-              dispatchSetData("update", payload);
-            },
+            onClose: onClose,
           });
         } else {
           Toast.error("修改失败");
         }
       })
-      .catch((err) => {
-        Toast.error(err);
-      });
+      .catch((err) => {});
   };
 
   // 新增轮播图
-  const addCarousels = () => {
-    return;
+  const addCarousels = (payload: any) => {
+    const { carouselRank, carouselUrl, redirectUrl } = payload;
+    
+    axios
+      .post("/carousels", {
+        carouselRank,
+        carouselUrl,
+        redirectUrl,
+      })
+      .then((res) => {
+        if (res === null) {
+          onRefresh();
+          Toast.success({
+            content: "添加成功",
+            duration: 1.5,
+            onClose: onClose,
+          });
+        } else {
+          Toast.error("添加失败");
+        }
+      })
+      .catch((err) => {});
   };
+
+  useEffect(() => {
+    setSwiperUrl(carouselUrl);
+  }, [carouselUrl]);
 
   return (
     <Modal
-      title={type && type === "add" ? "添加轮播图" : "修改轮播图"}
+      title={Object.keys(item).length ? "添加轮播图" : "修改轮播图"}
+      closeOnEsc={true}
       visible={visible}
       onOk={handleOk}
-      onCancel={() => {
-        setVisible(false);
-      }}
-      closeOnEsc={true}
+      onCancel={onClose}
     >
       <Form
         labelPosition="left"
@@ -103,9 +111,9 @@ const DiablogSwiper = (props: any) => {
           action={IMAGE_UPLOAD_API}
           accept="image/*"
           onSuccess={handleUploadSuccess}
-          onError={handleUploadFail}
+          onError={() => Toast.error("图片上传失败")}
         >
-          {type === "update" ? (
+          {Object.keys(item).length ? (
             <Avatar
               size="extra-large"
               shape="square"
@@ -116,18 +124,16 @@ const DiablogSwiper = (props: any) => {
             <IconUpload size="extra-large" />
           )}
         </Form.Upload>
+
         <Form.Input
           field="redirectUrl"
           label="跳转链接"
           trigger="blur"
-          defaultValue={type && type === "update" ? redirectUrl : ""}
-          initValue={type && type === "update" ? redirectUrl : ""}
           style={{ width: 200 }}
+          initValue={redirectUrl}
           rules={[
             {
-              validator: (rule, value) => {
-                return isURL(value);
-              },
+              validator: (rule, value) => isURL(value),
               message: "链接地址错误,请检查",
             },
           ]}
@@ -135,13 +141,18 @@ const DiablogSwiper = (props: any) => {
         <Form.InputNumber
           field="carouselRank"
           label="排序值"
-          defaultValue={type && type === "update" ? carouselRank : 0}
-          initValue={type && type === "update" ? carouselRank : 0}
           style={{ width: 200 }}
+          initValue={carouselRank}
+          rules={[
+            {
+              validator: (rule, value) => !!value,
+              message: "排序值不能为空",
+            },
+          ]}
         />
       </Form>
     </Modal>
   );
-};
+}
 
-export default DiablogSwiper;
+export default SwiperModal;

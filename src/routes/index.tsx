@@ -5,6 +5,7 @@ import Layout from "@/views/layout";
 import Login from "@/views/login";
 import Swiper from "@/views/swiper";
 import Loading from "@/components/Loading";
+import Hot from "@/views/hot";
 
 const routes = [
   { path: "login", element: <Login /> },
@@ -17,12 +18,12 @@ const routes = [
         element: <Introduce />,
       },
       { path: "loading", element: <Loading /> },
-
       { path: "dashboard", element: <Dashboard /> },
       { path: "swiper", element: <Swiper /> },
+      { path: "hot", element: <Hot /> },
+      { path: "*", element: <NotFound /> },
     ],
   },
-  { path: "*", element: <NotFound /> },
 ];
 
 export default routes;

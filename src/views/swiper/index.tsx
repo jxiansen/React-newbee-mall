@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import {
   Table,
   Typography,
@@ -8,22 +8,20 @@ import {
   Button,
   Popconfirm,
 } from "@douyinfe/semi-ui";
-import axios from "@/utils/axios";
+const { Text } = Typography;
 import { IconPlus, IconDelete } from "@douyinfe/semi-icons";
-import DialogAddSwiper from "@/components/dialogAddSwiper";
-import { useUpdate } from "ahooks";
+import axios from "@/utils/axios";
+import SwiperModal from "@/views/swiper/swiperModal";
 import "./index.less";
 
 export default function App() {
-  const { Text } = Typography;
   const [dataSource, setData] = useState<Array<any>>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [currentPage, setPage] = useState(1);
   const [deleteIds, setDeleteIds] = useState<Array<number | string>>([]);
   const [total, setTotal] = useState(100);
-  const [dialogVisible, setDialogVisible] = useState(false);
-  const [dialogData, setDialogData] = useState({});
-  const [operationType, setOperType] = useState("update"); // 默认操作类型是更新
+  const [modalVisible, setModalVisible] = useState(false);
+  const [item, setItem] = useState({});
 
   const dispatchSetData = (action: string, payload?: any) => {
     let newData = [...dataSource];
@@ -49,7 +47,6 @@ export default function App() {
         const targetIdx =
           carouselId &&
           dataSource.findIndex((row) => row.carouselId === carouselId);
-
         newData[targetIdx] = Object.assign({}, newData[targetIdx], payload);
         break;
       default:
@@ -59,14 +56,11 @@ export default function App() {
   };
 
   // 每次行选择重设新的选中数据
-  const rowSelection = useMemo(
-    () => ({
-      onChange: (selectedRowKeys: number[] | string[]) => {
-        setDeleteIds(selectedRowKeys);
-      },
-    }),
-    []
-  );
+  const rowSelection = {
+    onChange: (selectedRowKeys: any) => {
+      setDeleteIds(selectedRowKeys);
+    },
+  };
 
   // 批量删除分类信息
   const deleteCarousels = (deleteId?: number) => {
@@ -91,6 +85,33 @@ export default function App() {
       .catch((err) => {
         Toast.error(`${err}`);
       });
+  };
+
+  // 请求数据
+  const fetchData = async (page: number = 1) => {
+    setLoading(true);
+    const params = {
+      pageNumber: page,
+      pageSize: 10,
+    };
+    axios
+      .get("/carousels", {
+        params,
+      })
+      .then((res: any) => {
+        if (res) {
+          const { totalCount, currPage, list } = res;
+          setPage(currPage);
+          setTotal(totalCount);
+          setData(list);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {});
+  };
+
+  const handlePageChange = (page: number) => {
+    fetchData(page);
   };
 
   const columns = [
@@ -131,9 +152,8 @@ export default function App() {
               type="secondary"
               size="small"
               onClick={() => {
-                setOperType("update");
-                setDialogVisible(true);
-                setDialogData(record);
+                setItem(record);
+                setModalVisible(true);
               }}
             >
               修改
@@ -156,33 +176,9 @@ export default function App() {
     },
   ];
 
-  // 请求数据
-  const fetchData = async (page: number = 1) => {
-    setLoading(true);
-    try {
-      const params = {
-        pageNumber: page,
-        pageSize: 10,
-      };
-      const data: any = await axios.get("/carousels", {
-        params,
-      });
-      const { totalCount, currPage, list } = data;
-      setPage(currPage);
-      setTotal(totalCount);
-      setData(list);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
     fetchData();
   }, []);
-
-  const handlePageChange = (page: number) => {
-    fetchData(page);
-  };
 
   return (
     <div className="swiper-wrapper">
@@ -193,8 +189,8 @@ export default function App() {
             theme="solid"
             icon={<IconPlus />}
             onClick={() => {
-              setOperType("add");
-              setDialogVisible(true);
+              setItem({});
+              setModalVisible(true);
             }}
           >
             添加
@@ -203,9 +199,7 @@ export default function App() {
             type="danger"
             theme="solid"
             icon={<IconDelete />}
-            onClick={() => {
-              deleteCarousels();
-            }}
+            onClick={() => deleteCarousels()}
           >
             批量删除
           </Button>
@@ -225,12 +219,11 @@ export default function App() {
         loading={loading}
       />
 
-      <DialogAddSwiper
-        visible={dialogVisible}
-        swiperData={dialogData}
-        setVisible={setDialogVisible}
-        type={operationType}
-        dispatchSetData={dispatchSetData}
+      <SwiperModal
+        visible={modalVisible}
+        item={item}
+        onClose={() => setModalVisible(false)}
+        onRefresh={fetchData}
       />
     </div>
   );

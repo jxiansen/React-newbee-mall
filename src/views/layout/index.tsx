@@ -1,9 +1,9 @@
 import { Layout } from "@douyinfe/semi-ui";
 import { IconBytedanceLogo } from "@douyinfe/semi-icons";
 import { Outlet } from "react-router-dom";
-import LayoutSider from "./components/Sider";
-import LayoutHeader from "./components/Header";
-import LayoutFooter from "./components/Footer";
+import RenderLayoutSider from "./components/sider";
+import RenderLayoutHeader from "./components/Header";
+import RenderLayoutFooter from "./components/footer";
 
 import "./index.less";
 
@@ -11,16 +11,16 @@ export default () => {
   const { Content } = Layout;
 
   return (
-    <Layout className="layout">
-      <LayoutSider />
+    <Layout className="page-layout-wrapper">
+      <RenderLayoutSider />
       <Layout>
-        <LayoutHeader />
-        <Content className="content">
-          <div className="content-container">
+        <RenderLayoutHeader />
+        <Content className="page-layout-content">
+          <div className="page-layout-content-box">
             <Outlet />
           </div>
         </Content>
-        <LayoutFooter />
+        <RenderLayoutFooter />
       </Layout>
     </Layout>
   );

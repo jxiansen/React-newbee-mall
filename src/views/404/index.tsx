@@ -7,7 +7,7 @@ import "./index.less";
 const NotFound = () => {
   const navigate = useNavigate();
   return (
-    <div className="NoFound-wrapper">
+    <div className="notfound-page-container">
       <Empty
         image={<IllustrationNotFound />}
         darkModeImage={<IllustrationNotFoundDark />}
@@ -16,9 +16,7 @@ const NotFound = () => {
       <Button
         theme="solid"
         style={{ marginTop: "30px" }}
-        onClick={() => {
-          navigate("/");
-        }}
+        onClick={() => navigate("/")}
       >
         Go Back Home
       </Button>
